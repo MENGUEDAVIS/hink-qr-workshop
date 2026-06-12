@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const API = import.meta.env.VITE_API_URL || "";
+const MAX_CHARS = 2048;
 
 const TYPES = [
   { id: "url",   label: "URL" },
@@ -39,10 +40,16 @@ export default function App() {
   const [history, setHistory] = useState([]);
 
   const text = buildText(type, fields);
+  const charCount = text.length;
+  const overLimit = charCount > MAX_CHARS;
   const f = (key, val) => setFields(prev => ({ ...prev, [key]: val }));
 
   async function generate() {
     if (!text.trim()) return;
+    if (overLimit) {
+      setError(`Texte trop long (${charCount}/${MAX_CHARS} caractères). Réduisez le contenu.`);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -51,7 +58,8 @@ export default function App() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text, color, bg }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 413) throw new Error(`Texte trop long (max ${MAX_CHARS} caractères).`);
       if (!res.ok) throw new Error(data.error ?? `Erreur ${res.status}`);
       setQr(data);
       setHistory(prev => [data, ...prev.filter(h => h.text !== data.text)].slice(0, 8));
@@ -207,10 +215,14 @@ export default function App() {
 
             {error && <p className="error-msg">{error}</p>}
 
+            <p className={`char-limit${overLimit ? " over" : ""}`}>
+              {charCount} / {MAX_CHARS} caractères
+            </p>
+
             <button
               className="btn-generate"
               onClick={generate}
-              disabled={loading || !text.trim()}
+              disabled={loading || !text.trim() || overLimit}
             >
               {loading ? <span className="spinner" /> : "Générer →"}
             </button>

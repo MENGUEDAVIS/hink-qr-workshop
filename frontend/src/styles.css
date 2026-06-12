@@ -233,6 +233,18 @@ main {
   margin-bottom: 14px;
 }
 
+/* ── Char limit ──────────────────────────────────────────────── */
+.char-limit {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-bottom: 10px;
+}
+.char-limit.over {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* ── Generate button ─────────────────────────────────────────── */
 .btn-generate {
   width: 100%;
